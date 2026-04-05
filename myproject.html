@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KSRM Smart Traffic System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #F0F4F8;
+      --bg-deep: #E2E8F0;
+      --fg: #0F172A;
+      --muted: #64748B;
+      --accent: #0EA5E9;
+      --accent-glow: #38BDF8;
+      --card: #FFFFFF;
+      --border: #CBD5E1;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+
+    .dark {
+      --bg: #0F172A;
+      --bg-deep: #1E293B;
+      --fg: #F1F5F9;
+      --muted: #94A3B8;
+      --accent: #38BDF8;
+      --accent-glow: #0EA5E9;
+      --card: #1E293B;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Hero background */
+    .hero-bg {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 50%, rgba(16, 185, 129, 0.1), transparent),
+        var(--bg);
+    }
+
+    .dark .hero-bg {
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.2), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 50%, rgba(16, 185, 129, 0.1), transparent),
+        var(--bg);
+    }
+
+    .grid-pattern {
+      background-image:
+        linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    .dark .grid-pattern {
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+    }
+
+    .glass-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px rgba(14, 165, 233, 0.1);
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .traffic-pulse { position: relative; }
+
+    .traffic-pulse::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: inherit;
+      animation: pulse-ring 2s ease-out infinite;
+      opacity: 0.5;
+    }
+
+    @keyframes route-flow {
+      0% { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    .route-animated {
+      stroke-dasharray: 10 5;
+      animation: route-flow 1s linear infinite;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .stagger > * {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .stagger.visible > *:nth-child(1) { animation: fadeUp 0.5s 0.1s forwards; }
+    .stagger.visible > *:nth-child(2) { animation: fadeUp 0.5s 0.2s forwards; }
+    .stagger.visible > *:nth-child(3) { animation: fadeUp 0.5s 0.3s forwards; }
+    .stagger.visible > *:nth-child(4) { animation: fadeUp 0.5s 0.4s forwards; }
+    .stagger.visible > *:nth-child(5) { animation: fadeUp 0.5s 0.5s forwards; }
+    .stagger.visible > *:nth-child(6) { animation: fadeUp 0.5s 0.6s forwards; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .alert-item {
+      animation: slideIn 0.4s ease-out forwards;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #0284C7);
+      color: white;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+    }
+
+    *:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    .map-container {
+      background: var(--bg-deep);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .junction-point {
+      transition: all 0.3s ease;
+    }
+
+    .junction-point:hover {
+      transform: scale(1.2);
+      filter: drop-shadow(0 0 10px var(--accent));
+    }
+
+    @keyframes badge-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .notification-badge {
+      animation: badge-pulse 2s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero-stats {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+   
+    /* Helper class to force visibility for isolated sections */
+    .force-visible {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-t-0 border-l-0 border-r-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-400 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-display font-bold text-lg leading-tight">KSRM Traffic</h1>
+            <p class="text-xs" style="color: var(--muted);">Smart Navigation</p>
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-1">
+          <!-- Updated: Opens in new tab -->
+          <button onclick="openSection('home')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">Home</button>
+          <button onclick="openSection('map')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">Live Map</button>
+          <button onclick="openSection('alerts')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10 relative" style="color: var(--fg);">
+            Alerts
+            <span id="alertBadge" class="notification-badge absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+          </button>
+          <button onclick="openSection('report')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">Report</button>
+          <button onclick="openSection('about')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">About</button>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="darkToggle" class="p-2 rounded-lg transition-colors hover:bg-sky-500/10" style="color: var(--muted);" aria-label="Toggle dark mode">
+            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </button>
+          <button id="loginBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+            Student Login
+          </button>
+          <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg transition-colors hover:bg-sky-500/10" style="color: var(--muted);" aria-label="Open menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="md:hidden hidden border-t" style="border-color: var(--border); background: var(--card);">
+      <div class="px-4 py-3 space-y-1">
+        <button onclick="openSection('home')" class="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10">Home</button>
+        <button onclick="openSection('map')" class="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10">Live Map</button>
+        <button onclick="openSection('alerts')" class="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10">Alerts</button>
+        <button onclick="openSection('report')" class="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10">Report</button>
+        <button onclick="openSection('about')" class="block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10">About</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main id="mainContent" class="pt-16">
+   
+    <!-- Hero Section -->
+    <section id="home" class="hero-bg grid-pattern pt-24 pb-16 min-h-screen flex items-center">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="stagger" id="heroContent">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-6" style="background: rgba(14, 165, 233, 0.1); color: var(--accent);">
+              <span class="w-2 h-2 rounded-full bg-green-500 traffic-pulse"></span>
+              Live System Active
+            </div>
+            <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4">
+              KSRM Smart<br>
+              <span style="color: var(--accent);">Traffic System</span>
+            </h1>
+            <p class="text-lg mb-8" style="color: var(--muted);">
+              Helping Day Scholars Reach On Time. Real-time traffic monitoring for students commuting from Kadapa city and nearby areas to KSRM College of Engineering.
+            </p>
+
+            <!-- Route Checker -->
+            <div class="glass-card rounded-2xl p-4 mb-6">
+              <label class="block text-sm font-medium mb-2">Quick Route Checker</label>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <div class="flex-1 relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style="color: var(--muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <select id="routeFrom" class="w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:border-sky-500" style="background: var(--bg); border-color: var(--border); color: var(--fg);">
+                    <option value="">Select your location</option>
+                    <option value="kadapa-city">Kadapa City Center</option>
+                    <option value="railway-station">Railway Station Area</option>
+                    <option value="bus-stand">Bus Stand</option>
+                    <option value="proddatur">Proddatur Road</option>
+                    <option value="mydukur">Mydukur Road</option>
+                    <option value="chinnachowk">Chinna Chowk</option>
+                  </select>
+                </div>
+                <button onclick="checkRoute()" class="btn-primary px-6 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                  Check Route
+                </button>
+              </div>
+              <div id="routeResult" class="hidden mt-4 p-4 rounded-xl" style="background: var(--bg);"></div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="hero-stats flex flex-wrap gap-4">
+              <div class="flex items-center gap-3 px-4 py-2 rounded-xl" style="background: var(--card);">
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-sm font-medium">3 Low Traffic Routes</span>
+              </div>
+              <div class="flex items-center gap-3 px-4 py-2 rounded-xl" style="background: var(--card);">
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <span class="text-sm font-medium">2 Moderate Routes</span>
+              </div>
+              <div class="flex items-center gap-3 px-4 py-2 rounded-xl" style="background: var(--card);">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-sm font-medium">1 Heavy Traffic</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Traffic Status Panel -->
+          <div class="reveal" id="heroPanel">
+            <div class="glass-card rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="font-display font-semibold text-lg">Current Traffic Status</h2>
+                <span class="text-xs px-2 py-1 rounded-full" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                  Updated 2 min ago
+                </span>
+              </div>
+              <div class="space-y-4" id="trafficStatusList"></div>
+              <div class="mt-6 pt-4 border-t" style="border-color: var(--border);">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm" style="color: var(--muted);">Average Delay Today</span>
+                  <span class="font-display font-bold text-lg" style="color: var(--warning);">+8 mins</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Traffic Map Section -->
+    <section id="map" class="py-16" style="background: var(--bg-deep);">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="reveal">
+          <div class="text-center mb-10">
+            <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">Live Traffic Map</h2>
+            <p style="color: var(--muted);">Real-time traffic visualization for routes to KSRM College</p>
+          </div>
+
+          <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b" style="border-color: var(--border);">
+              <div class="flex gap-2">
+                <button onclick="setMapView('all')" class="map-tab active px-4 py-2 rounded-lg text-sm font-medium transition-all" style="background: var(--accent); color: white;">All Routes</button>
+                <button onclick="setMapView('congestion')" class="map-tab px-4 py-2 rounded-lg text-sm font-medium transition-all" style="color: var(--muted);">Congestion</button>
+                <button onclick="setMapView('incidents')" class="map-tab px-4 py-2 rounded-lg text-sm font-medium transition-all" style="color: var(--muted);">Incidents</button>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span><span style="color: var(--muted);">Low</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span style="color: var(--muted);">Medium</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span style="color: var(--muted);">High</span></div>
+              </div>
+            </div>
+
+            <div class="map-container h-96 sm:h-[500px] relative">
+              <svg id="trafficMap" viewBox="0 0 800 500" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(14, 165, 233, 0.1)" stroke-width="0.5"/></pattern>
+                  <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color: #0EA5E9; stop-opacity: 1" /><stop offset="100%" style="stop-color: #10B981; stop-opacity: 1" /></linearGradient>
+                  <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)"/>
+                <g id="routes">
+                  <path d="M 150 400 Q 200 350 280 300 Q 350 260 450 220 Q 520 190 600 150" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round" class="route-animated"/>
+                  <path d="M 100 250 Q 200 250 300 230 Q 400 210 500 180 Q 550 165 600 150" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" class="route-animated"/>
+                  <path d="M 200 150 Q 300 160 400 175 Q 500 185 600 150" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round" class="route-animated"/>
+                  <path d="M 50 100 Q 150 120 250 140 Q 400 160 600 150" fill="none" stroke="#EF4444" stroke-width="4" stroke-linecap="round" class="route-animated"/>
+                  <path d="M 750 350 Q 700 300 650 250 Q 620 200 600 150" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round" class="route-animated"/>
+                </g>
+                <g id="junctions">
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('kadapa-city')"><circle cx="150" cy="400" r="12" fill="#0EA5E9" filter="url(#glow)"/><circle cx="150" cy="400" r="6" fill="white"/><text x="150" y="430" text-anchor="middle" fill="currentColor" class="text-xs font-medium">Kadapa City</text></g>
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('railway-station')"><circle cx="100" cy="250" r="12" fill="#F59E0B" filter="url(#glow)"/><circle cx="100" cy="250" r="6" fill="white"/><text x="100" y="280" text-anchor="middle" fill="currentColor" class="text-xs font-medium">Railway Station</text></g>
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('bus-stand')"><circle cx="200" cy="150" r="12" fill="#10B981" filter="url(#glow)"/><circle cx="200" cy="150" r="6" fill="white"/><text x="200" y="130" text-anchor="middle" fill="currentColor" class="text-xs font-medium">Bus Stand</text></g>
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('proddatur')"><circle cx="50" cy="100" r="12" fill="#EF4444" filter="url(#glow)"/><circle cx="50" cy="100" r="6" fill="white"/><text x="50" y="80" text-anchor="middle" fill="currentColor" class="text-xs font-medium">Proddatur</text></g>
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('mydukur')"><circle cx="750" cy="350" r="12" fill="#10B981" filter="url(#glow)"/><circle cx="750" cy="350" r="6" fill="white"/><text x="750" y="380" text-anchor="middle" fill="currentColor" class="text-xs font-medium">Mydukur</text></g>
+                  <g class="junction-point cursor-pointer" onclick="showJunctionInfo('ksrm-college')"><circle cx="600" cy="150" r="20" fill="#0EA5E9" filter="url(#glow)"/><circle cx="600" cy="150" r="10" fill="white"/><text x="600" y="190" text-anchor="middle" fill="currentColor" class="text-sm font-bold">KSRM College</text></g>
+                  <g id="incidentMarker" class="cursor-pointer" onclick="showIncident()"><circle cx="300" cy="230" r="15" fill="#EF4444" class="traffic-pulse" style="background: #EF4444;"/><text x="300" y="235" text-anchor="middle" fill="white" class="text-lg font-bold">!</text></g>
+                </g>
+              </svg>
+              <div id="junctionPopup" class="hidden absolute glass-card rounded-xl p-4 shadow-xl" style="min-width: 200px;">
+                <div class="flex items-start justify-between mb-2">
+                  <h4 id="popupTitle" class="font-display font-semibold"></h4>
+                  <button onclick="closeJunctionPopup()" class="p-1 rounded hover:bg-sky-500/10">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div id="popupContent"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alerts Section -->
+    <section id="alerts" class="py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="reveal">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
+            <div>
+              <h2 class="font-display text-3xl sm:text-4xl font-bold mb-2">Traffic Alerts</h2>
+              <p style="color: var(--muted);">Real-time updates on traffic conditions and incidents</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <span class="text-sm font-medium" style="color: var(--success);">Live Updates Active</span>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="alertsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Report Section -->
+    <section id="report" class="py-16" style="background: var(--bg-deep);">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="reveal">
+          <div class="text-center mb-10">
+            <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">Report Traffic Issue</h2>
+            <p style="color: var(--muted);">Help fellow students by reporting traffic conditions</p>
+          </div>
+
+          <div class="glass-card rounded-2xl p-6 sm:p-8">
+            <form id="reportForm" onsubmit="submitReport(event)">
+              <div class="space-y-6">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Location</label>
+                  <select id="reportLocation" required class="w-full px-4 py-3 rounded-xl border text-sm transition-all focus:border-sky-500" style="background: var(--bg); border-color: var(--border); color: var(--fg);">
+                    <option value="">Select location</option>
+                    <option value="kadapa-city">Kadapa City Center</option>
+                    <option value="railway-station">Railway Station Area</option>
+                    <option value="bus-stand">Bus Stand</option>
+                    <option value="proddatur-road">Proddatur Road</option>
+                    <option value="mydukur-road">Mydukur Road</option>
+                    <option value="chinnachowk">Chinna Chowk</option>
+                    <option value="seven-roads">Seven Roads Junction</option>
+                    <option value="ksrm-road">KSRM College Road</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-3">Type of Issue</label>
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label class="issue-type-option cursor-pointer">
+                      <input type="radio" name="issueType" value="traffic-jam" class="sr-only" required>
+                      <div class="p-4 rounded-xl border-2 text-center transition-all hover:border-sky-500" style="border-color: var(--border);">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--warning);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-sm font-medium">Traffic Jam</span>
+                      </div>
+                    </label>
+                    <label class="issue-type-option cursor-pointer">
+                      <input type="radio" name="issueType" value="accident" class="sr-only">
+                      <div class="p-4 rounded-xl border-2 text-center transition-all hover:border-sky-500" style="border-color: var(--border);">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--danger);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span class="text-sm font-medium">Accident</span>
+                      </div>
+                    </label>
+                    <label class="issue-type-option cursor-pointer">
+                      <input type="radio" name="issueType" value="roadwork" class="sr-only">
+                      <div class="p-4 rounded-xl border-2 text-center transition-all hover:border-sky-500" style="border-color: var(--border);">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span class="text-sm font-medium">Roadwork</span>
+                      </div>
+                    </label>
+                    <label class="issue-type-option cursor-pointer">
+                      <input type="radio" name="issueType" value="roadblock" class="sr-only">
+                      <div class="p-4 rounded-xl border-2 text-center transition-all hover:border-sky-500" style="border-color: var(--border);">
+                        <svg class="w-8 h-8 mx-auto mb-2" style="color: var(--muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        <span class="text-sm font-medium">Roadblock</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-3">Severity Level</label>
+                  <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer">
+                      <input type="radio" name="severity" value="low" class="sr-only" required>
+                      <div class="severity-option p-3 rounded-xl border-2 text-center transition-all hover:border-green-500" style="border-color: var(--border);"><span class="text-sm font-medium text-green-500">Low</span></div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                      <input type="radio" name="severity" value="medium" class="sr-only">
+                      <div class="severity-option p-3 rounded-xl border-2 text-center transition-all hover:border-yellow-500" style="border-color: var(--border);"><span class="text-sm font-medium text-yellow-500">Medium</span></div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                      <input type="radio" name="severity" value="high" class="sr-only">
+                      <div class="severity-option p-3 rounded-xl border-2 text-center transition-all hover:border-red-500" style="border-color: var(--border);"><span class="text-sm font-medium text-red-500">High</span></div>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-2">Description</label>
+                  <textarea id="reportDescription" rows="3" placeholder="Provide additional details about the traffic issue..." class="w-full px-4 py-3 rounded-xl border text-sm transition-all focus:border-sky-500 resize-none" style="background: var(--bg); border-color: var(--border); color: var(--fg);"></textarea>
+                </div>
+                <button type="submit" class="w-full btn-primary py-4 rounded-xl font-medium flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Submit Report
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="reveal">
+          <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 class="font-display text-3xl sm:text-4xl font-bold mb-6">About KSRM Traffic System</h2>
+              <div class="space-y-4" style="color: var(--muted);">
+                <p>The KSRM Smart Traffic System is designed specifically for day scholar students of KSRM College of Engineering, Kadapa, who commute daily from various parts of the city and nearby towns.</p>
+                <p>Our system provides real-time traffic monitoring and alerts to help students plan their commute effectively and reach college on time, avoiding unnecessary delays caused by traffic congestion, accidents, or roadwork.</p>
+                <p>Built by students, for students - this platform aims to make daily commuting stress-free and predictable.</p>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mt-8">
+                <div class="glass-card rounded-xl p-4"><div class="text-3xl font-display font-bold" style="color: var(--accent);">500+</div><div class="text-sm" style="color: var(--muted);">Active Users</div></div>
+                <div class="glass-card rounded-xl p-4"><div class="text-3xl font-display font-bold" style="color: var(--accent);">6</div><div class="text-sm" style="color: var(--muted);">Major Routes Covered</div></div>
+                <div class="glass-card rounded-xl p-4"><div class="text-3xl font-display font-bold" style="color: var(--accent);">24/7</div><div class="text-sm" style="color: var(--muted);">Monitoring Active</div></div>
+                <div class="glass-card rounded-xl p-4"><div class="text-3xl font-display font-bold" style="color: var(--accent);">15min</div><div class="text-sm" style="color: var(--muted);">Avg. Time Saved</div></div>
+              </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+              <h3 class="font-display font-semibold text-xl mb-6">Key Features</h3>
+              <div class="space-y-4">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: rgba(14, 165, 233, 0.1);"><svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></div>
+                  <div><h4 class="font-medium mb-1">Real-Time Updates</h4><p class="text-sm" style="color: var(--muted);">Live traffic status for all major routes to KSRM College with automatic refresh every 2 minutes.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: rgba(16, 185, 129, 0.1);"><svg class="w-5 h-5" style="color: var(--success);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></div>
+                  <div><h4 class="font-medium mb-1">Instant Alerts</h4><p class="text-sm" style="color: var(--muted);">Get notified about accidents, roadblocks, and heavy traffic before you start your journey.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: rgba(245, 158, 11, 0.1);"><svg class="w-5 h-5" style="color: var(--warning);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                  <div><h4 class="font-medium mb-1">ETA Calculator</h4><p class="text-sm" style="color: var(--muted);">Plan your departure with accurate estimated travel times based on current traffic conditions.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: rgba(239, 68, 68, 0.1);"><svg class="w-5 h-5" style="color: var(--danger);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg></div>
+                  <div><h4 class="font-medium mb-1">Community Reports</h4><p class="text-sm" style="color: var(--muted);">Students can report traffic issues to help others plan better routes and avoid delays.</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+   
+  </main> <!-- End Main Content -->
+
+  <!-- Footer -->
+  <footer class="py-8 border-t" style="border-color: var(--border);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-400 flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          </div>
+          <span class="font-display font-medium">KSRM Smart Traffic System</span>
+        </div>
+        <p class="text-sm" style="color: var(--muted);">Developed for KSRM College of Engineering, Kadapa - Day Scholars</p>
+        <div class="flex items-center gap-4"><span class="text-xs px-2 py-1 rounded-full" style="background: var(--bg-deep); color: var(--muted);">v1.0.0</span></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="glass-card rounded-2xl p-6 w-full max-w-md" style="background: var(--card);">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="font-display font-semibold text-xl">Student Login</h3>
+        <button onclick="closeLoginModal()" class="p-2 rounded-lg hover:bg-sky-500/10" style="color: var(--muted);"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="space-y-4">
+          <div><label class="block text-sm font-medium mb-2">Roll Number</label><input type="text" placeholder="e.g., 21A0501" required class="w-full px-4 py-3 rounded-xl border text-sm transition-all focus:border-sky-500" style="background: var(--bg); border-color: var(--border); color: var(--fg);"></div>
+          <div><label class="block text-sm font-medium mb-2">Password</label><input type="password" placeholder="Enter your password" required class="w-full px-4 py-3 rounded-xl border text-sm transition-all focus:border-sky-500" style="background: var(--bg); border-color: var(--border); color: var(--fg);"></div>
+          <button type="submit" class="w-full btn-primary py-3 rounded-xl font-medium">Login</button>
+        </div>
+      </form>
+      <p class="text-center text-sm mt-4" style="color: var(--muted);">Don't have an account? <button class="font-medium" style="color: var(--accent);">Sign up</button></p>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="notification" class="fixed bottom-4 right-4 z-50 hidden">
+    <div class="glass-card rounded-xl p-4 shadow-xl flex items-center gap-3" style="background: var(--card);">
+      <div id="notifIcon" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background: rgba(16, 185, 129, 0.1);"><svg class="w-5 h-5" style="color: var(--success);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>
+      <div><p id="notifTitle" class="font-medium text-sm">Success</p><p id="notifMessage" class="text-xs" style="color: var(--muted);">Your report has been submitted.</p></div>
+    </div>
+  </div>
+
+  <script>
+    // ========== DATA ==========
+    const trafficRoutes = [
+      { id: 'kadapa-city', name: 'Kadapa City Center', status: 'low', eta: 18, distance: '7.2 km', congestion: '15%' },
+      { id: 'railway-station', name: 'Railway Station Area', status: 'medium', eta: 22, distance: '8.5 km', congestion: '45%' },
+      { id: 'bus-stand', name: 'Bus Stand', status: 'low', eta: 15, distance: '6.0 km', congestion: '20%' },
+      { id: 'proddatur', name: 'Proddatur Road', status: 'high', eta: 35, distance: '12.0 km', congestion: '75%' },
+      { id: 'mydukur', name: 'Mydukur Road', status: 'low', eta: 20, distance: '9.0 km', congestion: '18%' },
+      { id: 'chinnachowk', name: 'Chinna Chowk', status: 'medium', eta: 25, distance: '10.0 km', congestion: '55%' },
+    ];
+
+    const alerts = [
+      { id: 1, type: 'accident', location: 'Seven Roads Junction', severity: 'high', time: '10 mins ago', description: 'Minor accident reported. Traffic moving slowly.' },
+      { id: 2, type: 'roadwork', location: 'Proddatur Road', severity: 'medium', time: '25 mins ago', description: 'Road repair work in progress. Expect delays.' },
+      { id: 3, type: 'traffic-jam', location: 'Railway Station Area', severity: 'medium', time: '5 mins ago', description: 'Heavy traffic due to train arrival.' },
+      { id: 4, type: 'roadblock', location: 'KSRM College Road', severity: 'low', time: '1 hour ago', description: 'Temporary blockage cleared. Traffic normal.' },
+      { id: 5, type: 'traffic-jam', location: 'Bus Stand Area', severity: 'low', time: '30 mins ago', description: 'Moderate traffic during peak hours.' },
+      { id: 6, type: 'accident', location: 'Chinna Chowk', severity: 'high', time: '15 mins ago', description: 'Two-wheeler accident. One lane blocked.' },
+    ];
+
+    const junctionInfo = {
+      'kadapa-city': { title: 'Kadapa City Center', status: 'low', eta: '18 mins', bestTime: '8:30 AM', tips: 'Best route via Seven Roads Junction' },
+      'railway-station': { title: 'Railway Station Area', status: 'medium', eta: '22 mins', bestTime: '8:15 AM', tips: 'Avoid during train arrival times' },
+      'bus-stand': { title: 'Bus Stand', status: 'low', eta: '15 mins', bestTime: '8:35 AM', tips: 'Quick route, minimal traffic' },
+      'proddatur': { title: 'Proddatur Road', status: 'high', eta: '35 mins', bestTime: '8:00 AM', tips: 'Consider alternate route via Mydukur' },
+      'mydukur': { title: 'Mydukur Road', status: 'low', eta: '20 mins', bestTime: '8:25 AM', tips: 'Good road conditions today' },
+      'ksrm-college': { title: 'KSRM College of Engineering', status: 'destination', eta: '--', bestTime: 'Destination', tips: 'Your destination - Have a great day!' },
+    };
+
+    // ========== ROUTING LOGIC ==========
+    const sections = ['home', 'map', 'alerts', 'report', 'about'];
+
+    function openSection(id) {
+        // Open the current URL with the specific section hash in a new tab
+        const url = window.location.href.split('#')[0] + '#' + id;
+        window.open(url, '_blank');
+    }
+
+    function handleRoute() {
+        // Check URL hash
+        const hash = window.location.hash.replace('#', '');
+       
+        // If hash exists and is valid, show only that section
+        if (hash && sections.includes(hash)) {
+            showOnlySection(hash);
+        } else {
+            // Default: show all sections (standard scrolling behavior)
+            // OR uncomment next line to force Home only on blank load:
+            // showOnlySection('home');
+            showAllSections();
+        }
+    }
+
+    function showOnlySection(id) {
+        // Hide all sections
+        sections.forEach(secId => {
+            const el = document.getElementById(secId);
+            if (el) el.style.display = 'none';
+        });
+
+        // Show target section
+        const target = document.getElementById(id);
+        if (target) {
+            target.style.display = 'block'; // Or 'flex' / 'grid' if needed, but block is safer fallback
+           
+            // Force animations to play immediately since we skipped scroll
+            target.querySelectorAll('.reveal, .stagger').forEach(el => {
+                el.classList.add('visible', 'force-visible');
+            });
+        }
+       
+        // Scroll to top for fresh view
+        window.scrollTo(0, 0);
+    }
+
+    function showAllSections() {
+        sections.forEach(secId => {
+            const el = document.getElementById(secId);
+            if (el) el.style.display = 'block';
+        });
+        // Re-init normal scroll animations
+        setupScrollReveal();
+    }
+
+    // ========== INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      // Handle routing first
+      handleRoute();
+     
+      // Render dynamic data
+      renderTrafficStatus();
+      renderAlerts();
+     
+      // Setup interactions
+      setupFormInteractions();
+     
+      // Simulate live updates
+      setInterval(updateRandomTraffic, 30000);
+    });
+
+    // ========== RENDER FUNCTIONS ==========
+    function renderTrafficStatus() {
+      const container = document.getElementById('trafficStatusList');
+      if (!container) return;
+      container.innerHTML = trafficRoutes.map(route => {
+        const statusColors = {
+          low: { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', dot: 'bg-green-500' },
+          medium: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', dot: 'bg-yellow-500' },
+          high: { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', dot: 'bg-red-500' }
+        };
+        const s = statusColors[route.status];
+        return `
+          <div class="flex items-center justify-between p-3 rounded-xl transition-all hover:bg-sky-500/5 cursor-pointer" onclick="showRouteDetail('${route.id}')">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full ${s.dot} traffic-pulse" style="background: ${s.dot === 'bg-green-500' ? '#10B981' : s.dot === 'bg-yellow-500' ? '#F59E0B' : '#EF4444'};"></div>
+              <div><p class="font-medium text-sm">${route.name}</p><p class="text-xs" style="color: var(--muted);">${route.distance} away</p></div>
+            </div>
+            <div class="text-right"><p class="font-display font-bold" style="color: ${s.color};">${route.eta} min</p><p class="text-xs" style="color: var(--muted);">ETA</p></div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderAlerts() {
+      const container = document.getElementById('alertsList');
+      if (!container) return;
+      container.innerHTML = alerts.map((alert, index) => {
+        const icons = {
+          'accident': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+          'roadwork': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`,
+          'traffic-jam': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+          'roadblock': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>`
+        };
+        const severityColors = {
+          low: { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: '#10B981' },
+          medium: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '#F59E0B' },
+          high: { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '#EF4444' }
+        };
+        const s = severityColors[alert.severity];
+        return `
+          <div class="alert-item glass-card rounded-xl p-4 border-l-4" style="border-left-color: ${s.border}; animation-delay: ${index * 0.1}s;">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style="background: ${s.bg}; color: ${s.color};">${icons[alert.type]}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 mb-1"><h4 class="font-medium text-sm">${alert.location}</h4><span class="text-xs px-2 py-0.5 rounded-full shrink-0" style="background: ${s.bg}; color: ${s.color};">${alert.severity.toUpperCase()}</span></div>
+                <p class="text-xs mb-2" style="color: var(--muted);">${alert.description}</p><p class="text-xs" style="color: var(--muted);">${alert.time}</p>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ========== INTERACTIONS ==========
+    function checkRoute() {
+      const from = document.getElementById('routeFrom').value;
+      const resultDiv = document.getElementById('routeResult');
+      if (!from) { showNotification('Error', 'Please select a location', 'error'); return; }
+      const route = trafficRoutes.find(r => r.id === from);
+      if (!route) { resultDiv.innerHTML = '<p class="text-sm" style="color: var(--danger);">Route information not available.</p>'; resultDiv.classList.remove('hidden'); return; }
+      const statusColors = { low: '#10B981', medium: '#F59E0B', high: '#EF4444' };
+      const statusLabels = { low: 'Low Traffic', medium: 'Moderate Traffic', high: 'Heavy Traffic' };
+      resultDiv.innerHTML = `
+        <div class="flex items-center justify-between mb-3"><span class="text-sm font-medium">Route to KSRM College</span><span class="px-2 py-1 rounded-full text-xs font-medium" style="background: ${statusColors[route.status]}20; color: ${statusColors[route.status]};">${statusLabels[route.status]}</span></div>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div><p class="font-display font-bold text-xl" style="color: var(--accent);">${route.eta}</p><p class="text-xs" style="color: var(--muted);">minutes ETA</p></div>
+          <div><p class="font-display font-bold text-xl">${route.distance}</p><p class="text-xs" style="color: var(--muted);">distance</p></div>
+          <div><p class="font-display font-bold text-xl" style="color: ${statusColors[route.status]};">${route.congestion}</p><p class="text-xs" style="color: var(--muted);">congestion</p></div>
+        </div>
+        ${route.status === 'high' ? '<p class="text-xs mt-3 p-2 rounded-lg" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">Consider leaving 15 minutes earlier today.</p>' : ''}`;
+      resultDiv.classList.remove('hidden');
+    }
+
+    function setMapView(view) {
+      const tabs = document.querySelectorAll('.map-tab');
+      tabs.forEach(tab => { tab.style.background = 'transparent'; tab.style.color = 'var(--muted)'; });
+      event.target.style.background = 'var(--accent)'; event.target.style.color = 'white';
+    }
+
+    function showJunctionInfo(id) {
+      const info = junctionInfo[id]; if (!info) return;
+      const popup = document.getElementById('junctionPopup'); const title = document.getElementById('popupTitle'); const content = document.getElementById('popupContent');
+      title.textContent = info.title;
+      if (info.status === 'destination') { content.innerHTML = `<p class="text-sm mb-2" style="color: var(--muted);">${info.tips}</p>`; }
+      else {
+        const statusColors = { low: '#10B981', medium: '#F59E0B', high: '#EF4444' };
+        content.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex justify-between"><span class="text-sm" style="color: var(--muted);">Status:</span><span class="text-sm font-medium" style="color: ${statusColors[info.status]};">${info.status.toUpperCase()}</span></div>
+            <div class="flex justify-between"><span class="text-sm" style="color: var(--muted);">ETA:</span><span class="text-sm font-medium">${info.eta}</span></div>
+            <div class="flex justify-between"><span class="text-sm" style="color: var(--muted);">Best Departure:</span><span class="text-sm font-medium">${info.bestTime}</span></div>
+            <p class="text-xs mt-2 pt-2 border-t" style="border-color: var(--border); color: var(--muted);">${info.tips}</p>
+          </div>`;
+      }
+      popup.style.left = '50%'; popup.style.top = '50%'; popup.style.transform = 'translate(-50%, -50%)'; popup.classList.remove('hidden');
+    }
+
+    function closeJunctionPopup() { document.getElementById('junctionPopup').classList.add('hidden'); }
+
+    function showIncident() { showNotification('Traffic Alert', 'Accident reported at Seven Roads Junction', 'warning'); }
+
+    function showRouteDetail(id) {
+      const route = trafficRoutes.find(r => r.id === id);
+      if (route) { document.getElementById('routeFrom').value = id; checkRoute(); document.getElementById('routeResult').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+
+    function submitReport(e) {
+      e.preventDefault();
+      const location = document.getElementById('reportLocation').value; const issueType = document.querySelector('input[name="issueType"]:checked')?.value; const severity = document.querySelector('input[name="severity"]:checked')?.value; const description = document.getElementById('reportDescription').value;
+      if (!location || !issueType || !severity) { showNotification('Error', 'Please fill all required fields', 'error'); return; }
+      const newAlert = { id: alerts.length + 1, type: issueType, location: document.getElementById('reportLocation').options[document.getElementById('reportLocation').selectedIndex].text, severity: severity, time: 'Just now', description: description || 'Student reported incident' };
+      alerts.unshift(newAlert); renderAlerts();
+      document.getElementById('reportForm').reset();
+      document.querySelectorAll('.issue-type-option div, .severity-option').forEach(el => { el.style.borderColor = 'var(--border)'; });
+      showNotification('Report Submitted', 'Thank you for helping fellow students!', 'success');
+      const badge = document.getElementById('alertBadge'); badge.textContent = parseInt(badge.textContent) + 1;
+    }
+
+    // ========== UI HELPERS ==========
+    function setupScrollReveal() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal, .stagger').forEach(el => observer.observe(el));
+    }
+
+    function setupFormInteractions() {
+      document.querySelectorAll('.issue-type-option input').forEach(input => {
+        input.addEventListener('change', () => {
+          document.querySelectorAll('.issue-type-option div').forEach(div => { div.style.borderColor = 'var(--border)'; });
+          input.nextElementSibling.style.borderColor = 'var(--accent)';
+        });
+      });
+      document.querySelectorAll('.severity-option').forEach(option => {
+        const input = option.previousElementSibling;
+        if (input) {
+          input.addEventListener('change', () => {
+            document.querySelectorAll('.severity-option').forEach(div => { div.style.borderColor = 'var(--border)'; });
+            option.style.borderColor = option.querySelector('span').classList.contains('text-green-500') ? '#10B981' : option.querySelector('span').classList.contains('text-yellow-500') ? '#F59E0B' : '#EF4444';
+          });
+        }
+      });
+      document.getElementById('mobileMenuBtn')?.addEventListener('click', () => { document.getElementById('mobileMenu').classList.toggle('hidden'); });
+      document.getElementById('darkToggle')?.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); });
+      document.getElementById('loginBtn')?.addEventListener('click', () => { document.getElementById('loginModal').classList.remove('hidden'); document.getElementById('loginModal').classList.add('flex'); });
+    }
+
+    function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').classList.remove('flex'); }
+
+    function handleLogin(e) { e.preventDefault(); closeLoginModal(); showNotification('Welcome', 'Successfully logged in!', 'success'); document.getElementById('loginBtn').textContent = 'Dashboard'; }
+
+    function showNotification(title, message, type = 'success') {
+      const notif = document.getElementById('notification'); const notifTitle = document.getElementById('notifTitle'); const notifMessage = document.getElementById('notifMessage'); const notifIcon = document.getElementById('notifIcon');
+      notifTitle.textContent = title; notifMessage.textContent = message;
+      const iconColors = { success: { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }, error: { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }, warning: { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' } };
+      const c = iconColors[type] || iconColors.success; notifIcon.style.background = c.bg; notifIcon.style.color = c.color;
+      notif.classList.remove('hidden');
+      setTimeout(() => { notif.classList.add('hidden'); }, 4000);
+    }
+
+    function updateRandomTraffic() {
+      const randomIndex = Math.floor(Math.random() * trafficRoutes.length); const statuses = ['low', 'medium', 'high'];
+      trafficRoutes[randomIndex].status = statuses[Math.floor(Math.random() * statuses.length)];
+      trafficRoutes[randomIndex].eta += Math.floor(Math.random() * 5) - 2; trafficRoutes[randomIndex].eta = Math.max(10, trafficRoutes[randomIndex].eta);
+      renderTrafficStatus();
+    }
+
+    // Close popups on outside click
+    document.addEventListener('click', (e) => {
+      const popup = document.getElementById('junctionPopup');
+      if (!popup.contains(e.target) && !e.target.closest('.junction-point')) popup.classList.add('hidden');
+    });
+
+    // Keyboard accessibility
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeJunctionPopup(); closeLoginModal(); } });
+  </script>
+</body>
+</html>
