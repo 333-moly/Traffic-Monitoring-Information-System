@@ -58,7 +58,6 @@
 
     .font-display { font-family: 'Space Grotesk', sans-serif; }
 
-    /* Hero background */
     .hero-bg {
       background:
         radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.15), transparent),
@@ -221,7 +220,6 @@
       }
     }
    
-    /* Helper class to force visibility for isolated sections */
     .force-visible {
         opacity: 1 !important;
         transform: translateY(0) !important;
@@ -241,13 +239,12 @@
             </svg>
           </div>
           <div>
-            <h1 class="font-display font-bold text-lg leading-tight">KSRM Traffic</h1>
-            <p class="text-xs" style="color: var(--muted);">Smart Navigation</p>
+            <h1 class="font-display font-bold text-lg leading-tight">Traffic Navigation</h1>
+            <p class="text-xs" style="color: var(--muted);">Traffic Navigation</p>
           </div>
         </div>
 
         <div class="hidden md:flex items-center gap-1">
-          <!-- Updated: Opens in new tab -->
           <button onclick="openSection('home')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">Home</button>
           <button onclick="openSection('map')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10" style="color: var(--fg);">Live Map</button>
           <button onclick="openSection('alerts')" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-sky-500/10 relative" style="color: var(--fg);">
@@ -601,7 +598,7 @@
       </div>
     </section>
    
-  </main> <!-- End Main Content -->
+  </main>
 
   <!-- Footer -->
   <footer class="py-8 border-t" style="border-color: var(--border);">
@@ -678,45 +675,35 @@
     const sections = ['home', 'map', 'alerts', 'report', 'about'];
 
     function openSection(id) {
-        // Open the current URL with the specific section hash in a new tab
         const url = window.location.href.split('#')[0] + '#' + id;
         window.open(url, '_blank');
     }
 
     function handleRoute() {
-        // Check URL hash
         const hash = window.location.hash.replace('#', '');
        
-        // If hash exists and is valid, show only that section
         if (hash && sections.includes(hash)) {
             showOnlySection(hash);
         } else {
-            // Default: show all sections (standard scrolling behavior)
-            // OR uncomment next line to force Home only on blank load:
-            // showOnlySection('home');
             showAllSections();
         }
     }
 
     function showOnlySection(id) {
-        // Hide all sections
         sections.forEach(secId => {
             const el = document.getElementById(secId);
             if (el) el.style.display = 'none';
         });
 
-        // Show target section
         const target = document.getElementById(id);
         if (target) {
-            target.style.display = 'block'; // Or 'flex' / 'grid' if needed, but block is safer fallback
+            target.style.display = 'block';
            
-            // Force animations to play immediately since we skipped scroll
             target.querySelectorAll('.reveal, .stagger').forEach(el => {
                 el.classList.add('visible', 'force-visible');
             });
         }
        
-        // Scroll to top for fresh view
         window.scrollTo(0, 0);
     }
 
@@ -725,23 +712,15 @@
             const el = document.getElementById(secId);
             if (el) el.style.display = 'block';
         });
-        // Re-init normal scroll animations
         setupScrollReveal();
     }
 
     // ========== INITIALIZATION ==========
     document.addEventListener('DOMContentLoaded', () => {
-      // Handle routing first
       handleRoute();
-     
-      // Render dynamic data
       renderTrafficStatus();
       renderAlerts();
-     
-      // Setup interactions
       setupFormInteractions();
-     
-      // Simulate live updates
       setInterval(updateRandomTraffic, 30000);
     });
 
@@ -910,13 +889,11 @@
       renderTrafficStatus();
     }
 
-    // Close popups on outside click
     document.addEventListener('click', (e) => {
       const popup = document.getElementById('junctionPopup');
       if (!popup.contains(e.target) && !e.target.closest('.junction-point')) popup.classList.add('hidden');
     });
 
-    // Keyboard accessibility
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeJunctionPopup(); closeLoginModal(); } });
   </script>
 </body>
